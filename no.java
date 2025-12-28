@@ -4,7 +4,7 @@ import java.util.*;
 
 /* Error Codes:
 0 - Incorrect Input
-5 - Syntax Error
+5,6,7 - Syntax Error
 10 - Terminal Cmd Error
 */
 
@@ -31,7 +31,7 @@ public class no{
         String contents = Files.readString(Path.of(args[0]));
         contents = contents.substring(0, contents.length() - 1) + " ; ";
 
-        String tokens[] = {"_return", "int_lit", "plus", "minus", "semi"};
+        String tokens[] = {"_return", "int_lit", "plus", "minus", "mult", "div", "semi"};
 
         ArrayList <Tokenss> tokenList = tokenization(contents, tokens);
 
@@ -42,26 +42,48 @@ public class no{
             System.exit(6);
         }
 
+        for(int i = 0; i < tokenList.size() - 1; i++){
+            if(tokenList.get(i).type.equals(tokenList.get(i + 1).type)){
+                System.out.print("Syntax Error");
+                System.exit(7);
+            }
+        }
+
 
         //Evaluating the expression in return
         int result = 0;
+        int count = 0;
+
+
+        //Solving Operator Precendence without binary trees :) - Solves * and /
+        while(tokenList.size() != 3){
+            if(tokenList.get(count).type.equals("mult") && tokenList.get(count - 1).type.equals("int_lit") && tokenList.get(count + 1).type.equals("int_lit")){
+                result = Integer.parseInt(tokenList.get(count).value) * Integer.parseInt(tokenList.get(count).value);
+                resObjUpdation(result, tokens[1], tokenList, count);
+                count = 0;
+                continue;
+            }
+            if(tokenList.get(count).type.equals("div") && tokenList.get(count - 1).type.equals("int_lit") && tokenList.get(count + 1).type.equals("int_lit")){
+                result = Integer.parseInt(tokenList.get(count).value) / Integer.parseInt(tokenList.get(count).value);
+                resObjUpdation(result, tokens[1], tokenList, count);
+                count = 0;
+                continue;
+            }
+            count++;
+        }
+
+        // Evaluating + and -
         for(int i = 0; i < tokenList.size(); i++){
             if(tokenList.get(i).type.equals("int_lit"))
                 result = Integer.parseInt(tokenList.get(i).value);
             else if(tokenList.get(i).type.equals("plus") && tokenList.get(i + 1).type.equals("int_lit") && tokenList.get(i - 1).type.equals("int_lit")){
                 result = Integer.parseInt(tokenList.get(i - 1).value) + Integer.parseInt(tokenList.get(i + 1).value);
-                Tokenss res_obj = new Tokenss(String.valueOf(result), tokens[1]);
-                tokenList.set(i - 1, res_obj);
-                tokenList.remove(i);
-                tokenList.remove(i);
+                resObjUpdation(result, tokens[1], tokenList, i);
                 i--;
             }
             else if(tokenList.get(i).type.equals("minus") && tokenList.get(i + 1).type.equals("int_lit") && tokenList.get(i - 1).type.equals("int_lit")){
                 result = Integer.parseInt(tokenList.get(i - 1).value) - Integer.parseInt(tokenList.get(i + 1).value);
-                Tokenss res_obj = new Tokenss(String.valueOf(result), tokens[1]);
-                tokenList.set(i - 1, res_obj);
-                tokenList.remove(i);
-                tokenList.remove(i);
+                resObjUpdation(result, tokens[1], tokenList, i);
                 i--;
             }
         }
@@ -130,9 +152,13 @@ public class no{
                 else if(str.equals("+"))
                     obj1 = new Tokenss(str, tokens[2]);
                 else if(str.equals("-"))
-                    obj1 = new Tokenss(str,tokens[3]);
-                else if(str.equals(";"))
+                    obj1 = new Tokenss(str, tokens[3]);
+                else if(str.equals("*"))
                     obj1 = new Tokenss(str, tokens[4]);
+                else if(str.equals("/"))
+                    obj1 = new Tokenss(str, tokens[5]);
+                else if(str.equals(";"))
+                    obj1 = new Tokenss(str, tokens[6]);
                 else{
                     System.out.print("Syntax Error");
                     System.exit(5);
@@ -154,7 +180,7 @@ public class no{
 
 
     // To check if str is a number
-    public static boolean isNumber(String str){
+    private static boolean isNumber(String str){
         for(int i = 0; i < str.length(); i++){
             if(!Character.isDigit(str.charAt(i)))
                 return false;
@@ -162,6 +188,14 @@ public class no{
         return true;
     }
 
+
+    private static Tokenss resObjUpdation(int res, String type, ArrayList<Tokenss> listTokens, int i){
+        Tokenss obj = new Tokenss(String.valueOf(res), type);
+        listTokens.set(i - 1, obj);
+        listTokens.remove(i);
+        listTokens.remove(i);
+        return obj;
+    }
 
     // To run the terminal commands
     public static void runCommand(String... cmd) throws IOException, InterruptedException{
