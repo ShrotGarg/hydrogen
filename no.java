@@ -56,15 +56,15 @@ public class no{
 
 
         //Solving Operator Precendence without binary trees :) - Solves * and /
-        while(tokenList.size() != 3){
+        while(tokenList.size() != 3 && count < tokenList.size()){
             if(tokenList.get(count).type.equals("mult") && tokenList.get(count - 1).type.equals("int_lit") && tokenList.get(count + 1).type.equals("int_lit")){
-                result = Integer.parseInt(tokenList.get(count).value) * Integer.parseInt(tokenList.get(count).value);
+                result = Integer.parseInt(tokenList.get(count - 1).value) * Integer.parseInt(tokenList.get(count + 1).value);
                 resObjUpdation(result, tokens[1], tokenList, count);
                 count = 0;
                 continue;
             }
             if(tokenList.get(count).type.equals("div") && tokenList.get(count - 1).type.equals("int_lit") && tokenList.get(count + 1).type.equals("int_lit")){
-                result = Integer.parseInt(tokenList.get(count).value) / Integer.parseInt(tokenList.get(count).value);
+                result = Integer.parseInt(tokenList.get(count - 1).value) / Integer.parseInt(tokenList.get(count + 1).value);
                 resObjUpdation(result, tokens[1], tokenList, count);
                 count = 0;
                 continue;
