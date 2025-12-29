@@ -20,7 +20,6 @@ class Tokenss {
 
 public class no{
     static int result = 0;
-
     public static void main(String[] args) throws IOException, InterruptedException{
         // Checks if the file inputted is correct
         if(args[0].indexOf(".hydro") == -1){
@@ -29,9 +28,7 @@ public class no{
         }
 
         String contents = Files.readString(Path.of(args[0])).trim() + " ";
-
         String tokens[] = {"_return", "int_lit", "plus", "minus", "mult", "div", "open_para", "close_para", "semi"};
-
         ArrayList <Tokenss> tokenList = tokenization(contents, tokens);
 
 
@@ -188,7 +185,6 @@ public class no{
             if(list.get(i).type.equals("open_para"))
                 return true;
         }
-
         return false;
     }
 
@@ -197,14 +193,18 @@ public class no{
     private static void solvePara(ArrayList<Tokenss> list, String[] tokens){
         int pos = 0;
         for(int i = 0; i < list.size(); i++){
-            if(list.get(i).type.equals("close_para"))
+            if(list.get(i).type.equals("close_para")){
                 pos = i;
+                break;
+            }
         }
 
         int pos1 = 0;
         for(int i = pos - 1; i >= 0; i--){
-            if(list.get(i).type.equals("open_para"))
+            if(list.get(i).type.equals("open_para")){
                 pos1 = i;
+                break;
+            }
         }
 
         //Creating a subexpression to solve
@@ -216,12 +216,11 @@ public class no{
         mult_or_div(sublist, tokens);
         add_or_sub(sublist, tokens);
 
+        int range = pos - pos1 + 1;
         //Modify the list
-        list.set(pos1, sublist.get(0));
-
-        int count = pos - pos1;
-        for(int i = 0; i < count; i++)
-            list.remove(pos1 + 1);
+        for(int i = 0; i < range; i++)
+            list.remove(pos1);
+        list.add(pos1, sublist.get(0));
 
         if(check_paran(list))
             solvePara(list, tokens);
@@ -232,7 +231,7 @@ public class no{
 
     //Solving Operator Precendence without binary trees :) - Solves * and /
     private static void mult_or_div(ArrayList<Tokenss> tokenList, String[] tokens){
-        int count = 0;
+        int count = 1;
         int val = 0;
 
         while(count < tokenList.size()){
@@ -271,7 +270,6 @@ public class no{
                     i = 0;
                 }
             }
-
             i++;
         }
     }
