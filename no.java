@@ -4,7 +4,7 @@ import java.util.*;
 
 /* Error Codes:
 0 - Incorrect Input
-5 - 7 - Syntax Error
+5 - 8 - Syntax Error
 10 - Terminal Cmd Error
 */
 
@@ -20,6 +20,7 @@ class Tokenss {
 
 public class no{
     static int result = 0;
+    static boolean flag_paran = false;; static boolean flag_var = false;
     public static void main(String[] args) throws IOException, InterruptedException{
         // Checks if the file inputted is correct
         if(args[0].indexOf(".hydro") == -1){
@@ -28,9 +29,10 @@ public class no{
         }
 
         String contents = Files.readString(Path.of(args[0])).trim() + " ";
-        String tokens[] = {"_return", "int_lit", "plus", "minus", "mult", "div", "open_para", "close_para", "semi"};
+        String tokens[] = {"_return", "int_lit", "plus", "minus", "mult", "div", "open_para", "close_para", "_variable", "var_name", "_equal", "semi"}; //11
         ArrayList <Tokenss> tokenList = tokenization(contents, tokens);
-
+        //printList(tokenList);
+        HashMap <String, Tokenss> map = new HashMap<>();
 
         //Syntax Check
         if(!checkSyntax(tokenList)){
@@ -39,15 +41,78 @@ public class no{
         }
 
 
-        //Solving Paranthesis using recursino
-        if(check_paran(tokenList))
-            solvePara(tokenList, tokens);
+        //To evaluate code that has variables
+        if(flag_var){
+            ArrayList<ArrayList<Tokenss>> sents = new ArrayList<>();
+            ArrayList<Tokenss> temp = new ArrayList<>();
 
+            //Seperate each ';' into sentences
+            for(int i = 0; i < tokenList.size(); i++){
+                if(tokenList.get(i).type.equals(tokens[11])){
+                    temp.add(tokenList.get(i));
+                    sents.add(new ArrayList<>(temp));
+                    temp.clear();
+                }
+                else
+                    temp.add(tokenList.get(i));
+            }
+            temp.clear();
 
-        //Calculation
-        mult_or_div(tokenList, tokens);
-        add_or_sub(tokenList, tokens);
-        result = Integer.parseInt(tokenList.get(1).value);
+            for(int i = 0; i < sents.size(); i++){
+
+                //Variable evaluation
+                if(sents.get(i).get(0).type.equals(tokens[8])){
+                    for(int j = 3; j < sents.get(i).size(); j++)
+                        temp.add(sents.get(i).get(j));
+
+                    if(check_paran(temp))
+                        solvePara(temp, tokens);
+
+                    mult_or_div(temp, tokens);
+                    add_or_sub(temp, tokens);
+
+                    map.put(sents.get(i).get(1).value, temp.get(0));
+                }
+
+                //Return evaluation
+                else if(sents.get(i).get(0).type.equals(tokens[0])){
+                    //Replacing all the variables with their value
+                    for(int j = 1; j < sents.get(i).size() - 1; j++){
+                        Tokenss t = sents.get(i).get(j);
+
+                        if(map.containsKey(t.value))
+                            temp.add(map.get(t.value)); //swaps the variable for its value
+                        else
+                            temp.add(t);
+                    }
+
+                    //Evaluation
+                    if(check_paran(temp))
+                        solvePara(temp, tokens);
+
+                    mult_or_div(temp, tokens);
+                    add_or_sub(temp, tokens);
+
+                    result = Integer.parseInt(temp.get(0).value);
+                }
+                else{
+                    System.out.println("Syntax Error");
+                    System.exit(8);
+                }
+
+                temp.clear();
+            }
+        }
+        else{
+            //If no variable is present
+            if(flag_paran)
+                solvePara(tokenList, tokens);
+
+            mult_or_div(tokenList, tokens);
+            add_or_sub(tokenList, tokens);
+
+            result = Integer.parseInt(tokenList.get(1).value);
+        }
 
         //Converting to Assembly Code
         String asm_code = "global _start\n" +
@@ -94,6 +159,13 @@ public class no{
         p.waitFor();
     }
 
+    //Helper Function to debug code
+    private static void printList(ArrayList<Tokenss> list){
+        for(int i = 0; i < list.size(); i++)
+            System.out.println(list.get(i).value + " " + list.get(i).type);
+    }
+
+
     // Tokenization
     public static ArrayList<Tokenss> tokenization(String content, String tokens[]) {
         ArrayList<Tokenss> list = new ArrayList<Tokenss>();
@@ -110,10 +182,12 @@ public class no{
                         list.add(new Tokenss(str, tokens[0]));
                     else if (isNumber(str))
                         list.add(new Tokenss(str, tokens[1]));
-                    else {
-                        System.out.println("Syntax Error");
-                        System.exit(5);
+                    else if(str.equals("var")){
+                        list.add(new Tokenss(str,tokens[8]));
+                        flag_var = true;
                     }
+                    else
+                        list.add(new Tokenss(str, tokens[9]));
                     str = "";
                 }
 
@@ -123,9 +197,13 @@ public class no{
                     else if (ch == '-') type = tokens[3];
                     else if (ch == '*') type = tokens[4];
                     else if (ch == '/') type = tokens[5];
-                    else if (ch == '(') type = tokens[6];
+                    else if (ch == '(') {
+                        type = tokens[6];
+                        flag_paran = true;
+                    }
                     else if (ch == ')') type = tokens[7];
-                    else if (ch == ';') type = tokens[8];
+                    else if (ch == '=') type = tokens[10];
+                    else if (ch == ';') type = tokens[11];
                     else {
                         System.out.println("Syntax Error");
                         System.exit(6);
@@ -162,9 +240,6 @@ public class no{
             if(list.get(i).type.equals("close_para"))
                 c--;
         }
-
-        if(!(list.get(0).type.equals("_return") && list.get(list.size() - 1).type.equals("semi")))
-            return false;
 
         if(c != 0)
             return false;
