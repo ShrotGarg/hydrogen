@@ -94,12 +94,6 @@ public class no{
         p.waitFor();
     }
 
-    private static void printList(ArrayList<Tokenss> list){
-        for(int i = 0; i < list.size(); i++){
-            System.out.println(list.get(i).value + " " + list.get(i).type);
-        }
-    }
-
     // Tokenization
     public static ArrayList<Tokenss> tokenization(String content, String tokens[]) {
         ArrayList<Tokenss> list = new ArrayList<Tokenss>();
@@ -216,8 +210,8 @@ public class no{
         mult_or_div(sublist, tokens);
         add_or_sub(sublist, tokens);
 
-        int range = pos - pos1 + 1;
         //Modify the list
+        int range = pos - pos1 + 1;
         for(int i = 0; i < range; i++)
             list.remove(pos1);
         list.add(pos1, sublist.get(0));
