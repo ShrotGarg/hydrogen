@@ -80,7 +80,27 @@ public class no{
                     map.put(sents.get(i).get(1).value, temp.get(0));
                 }
 
-                //Return evaluation
+                //Assignment of Variables Expression
+                else if(sents.get(i).get(0).type.equals(tokens[9]) && sents.get(i).get(1).type.equals(tokens[10])){
+                    for(int j = 2; j < sents.get(i).size(); j++){
+                        Tokenss t = sents.get(i).get(j);
+
+                        if(map.containsKey(t.value))
+                            temp.add(map.get(t.value));
+                        else
+                            temp.add(t);
+                    }
+
+                    if(check_paran(temp))
+                        solvePara(temp,tokens);
+
+                    mult_or_div(temp, tokens);
+                    add_or_sub(temp, tokens);
+
+                    map.put(sents.get(i).get(0).value, temp.get(0));
+                }
+
+                //Return Expression
                 else if(sents.get(i).get(0).type.equals(tokens[0])){
                     //Replacing all the variables with their value
                     for(int j = 1; j < sents.get(i).size() - 1; j++){
