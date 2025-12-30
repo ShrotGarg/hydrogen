@@ -62,8 +62,14 @@ public class no{
 
                 //Variable evaluation
                 if(sents.get(i).get(0).type.equals(tokens[8])){
-                    for(int j = 3; j < sents.get(i).size(); j++)
-                        temp.add(sents.get(i).get(j));
+                    for(int j = 3; j < sents.get(i).size(); j++){
+                        Tokenss t = sents.get(i).get(j);
+
+                        if(map.containsKey(t.value))
+                            temp.add(map.get(t.value));
+                        else
+                            temp.add(t);
+                    }
 
                     if(check_paran(temp))
                         solvePara(temp, tokens);
