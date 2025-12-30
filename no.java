@@ -19,9 +19,15 @@ class Tokenss {
 }
 
 public class no{
+
     static int result = 0;
     static boolean flag_paran = false;; static boolean flag_var = false;
+    static String cachedSdkPath = null;
+
     public static void main(String[] args) throws IOException, InterruptedException{
+
+        long start = System.nanoTime();
+
         // Checks if the file inputted is correct
         if(args[0].indexOf(".hydro") == -1){
             System.out.print("Incorrect input");
@@ -34,7 +40,7 @@ public class no{
         //printList(tokenList);
         HashMap <String, Tokenss> map = new HashMap<>();
 
-        //Syntax Check
+        //Basic Syntax Check
         if(!checkSyntax(tokenList)){
             System.out.print("Syntax Error");
             System.exit(7);
@@ -60,8 +66,8 @@ public class no{
 
             for(int i = 0; i < sents.size(); i++){
 
-                //Variable evaluation
-                if(sents.get(i).get(0).type.equals(tokens[8])){
+                //Variable Declaration
+                if(sents.get(i).get(0).type.equals(tokens[8]) && sents.get(i).get(1).type.equals(tokens[9]) && sents.get(i).get(2).type.equals(tokens[10])){
                     for(int j = 3; j < sents.get(i).size(); j++){
                         Tokenss t = sents.get(i).get(j);
 
@@ -140,24 +146,22 @@ public class no{
             result = Integer.parseInt(tokenList.get(1).value);
         }
 
-        //Converting to Assembly Code
-        String asm_code = "global _start\n" +
-                          "\n" +
-                          "_start:\n" +
-                          "\tmov rax, 0x2000001\n" +
-                          "\tmov rdi, " + Math.abs(result) + "\n";
+        //To reduce runtime
+        StringBuilder asm_code = new StringBuilder();
 
-        if(result < 0){
-            asm_code += "\tneg rdi\n" + "\tsyscall";
-        }
+        //Converting to Assembly Code
+        asm_code.append("global _start\n\n").append("_start:\n").append("\tmov rax, 0x2000001\n").append("\tmov rdi, ").append(Math.abs(result)).append("\n");
+        if(result < 0)
+            asm_code.append("\tneg rdi\n").append("\tsyscall");
         else
-            asm_code += "\tsyscall";
+            asm_code.append("\tsyscall");
+
 
         FileWriter fout = new FileWriter("test.asm");
         BufferedWriter bout = new BufferedWriter(fout);
         PrintWriter pout = new PrintWriter(bout);
 
-        pout.write(asm_code);
+        pout.write(asm_code.toString());
 
         pout.close();
         bout.close();
@@ -165,24 +169,17 @@ public class no{
 
 
         //Running terminal Commands
-        runCommand("nasm", "-f", "macho64", "./test.asm", "-o", "test.o");
-
-        Process sdkProcess = new ProcessBuilder("xcrun", "--show-sdk-path").start();
-        String sdkpath = new BufferedReader(new InputStreamReader(sdkProcess.getInputStream())).readLine();
-        runCommand("ld", "-o", "test", "test.o", "-lSystem", "-syslibroot", sdkpath, "-e",
-                         "_start", "-arch", "x86_64");
-
-        ProcessBuilder pb = new ProcessBuilder("zsh", "-c", "./test; echo $?");
-        Process p = pb.start();
-
-        BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        String line;
-
-        while((line = reader.readLine()) != null){
-            System.out.println("Program Exit Code: " + line);
-        }
-
+        String sdkpath = getSDKPath();
+        runCommand("nasm", "-f", "macho64", "test.asm", "-o", "test.o");
+        runCommand("ld", "-o", "test", "test.o", "-lSystem", "-syslibroot", sdkpath, "-e", "_start", "-arch", "x86_64");
+        Process p = new ProcessBuilder("./test").start();
         p.waitFor();
+
+        System.out.println("Program Exit Code: " + p.exitValue());
+        long end = System.nanoTime();
+        long time = (end - start)/1000000;
+
+        System.out.print("Time taken: " + time + "ms");
     }
 
     //Helper Function to debug code
@@ -389,5 +386,26 @@ public class no{
             System.out.println("Error at: " + cmd[0]);
             System.exit(10);
         }
+    }
+
+
+    //To Reduce Run time by caching the SDK path
+    private static String getSDKPath() throws IOException {
+        if (cachedSdkPath != null) return cachedSdkPath;
+
+        //Checking default place
+        File defaultPath = new File("/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk");
+        if (defaultPath.exists()) {
+            cachedSdkPath = defaultPath.getAbsolutePath();
+            return cachedSdkPath;
+        }
+
+        // If not in default, ask the system
+        Process process = Runtime.getRuntime().exec("xcrun --show-sdk-path");
+        try (BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            cachedSdkPath = r.readLine();
+        }
+
+        return cachedSdkPath;
     }
 }
