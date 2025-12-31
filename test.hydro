@@ -1,5 +1,4 @@
-var x = 15;
-var y = 10;
+var x = 1 and 0;
+var y = x + 5;
 
-var z = y;
-return z * 5 and y - 5;
+return ((y));
