@@ -75,6 +75,14 @@ public class no{
                     }
 
                     evaluation(temp, tokens);
+                    boolean change = false;
+                    do{
+                        int before = temp.size();
+                        solveLogOper(temp, tokens);
+                        solveLogExpr(temp, tokens);
+                        change = (before == temp.size()) ? false : true;
+                    }while(change);
+
                     map.put(sents.get(i).get(1).value, temp.get(0));
                 }
 
@@ -90,6 +98,14 @@ public class no{
                     }
 
                     evaluation(temp, tokens);
+                    boolean change = false;
+                    do{
+                        int before = temp.size();
+                        solveLogOper(temp, tokens);
+                        solveLogExpr(temp, tokens);
+                        change = (before == temp.size()) ? false : true;
+                    }while(change);
+
                     map.put(sents.get(i).get(0).value, temp.get(0));
                 }
 
@@ -111,8 +127,13 @@ public class no{
 
                     //Evaluation
                     evaluation(temp, tokens);
-                    solveLogOper(temp, tokens);
-                    solveLogExpr(temp, tokens);
+                    boolean change = false;
+                    do{
+                        int before = temp.size();
+                        solveLogOper(temp, tokens);
+                        solveLogExpr(temp, tokens);
+                        change = (before == temp.size()) ? false : true;
+                    }while(change);
 
                     result = Integer.parseInt(temp.get(0).value);
                 }
@@ -127,9 +148,14 @@ public class no{
         else{
             //If no variable is present
             evaluation(tokenList, tokens);
-            solveLogOper(tokenList, tokens);
-            solveLogExpr(tokenList, tokens);
-            result = Integer.parseInt(tokenList.get(1).value);
+            boolean change = false;
+            do{
+                int before = tokenList.size();
+                solveLogOper(tokenList, tokens);
+                solveLogExpr(tokenList, tokens);
+                change = (before == tokenList.size()) ? false : true;
+            }while(change);
+            result = Integer.parseInt(tokenList.get(0).value);
         }
 
         //To reduce runtime
