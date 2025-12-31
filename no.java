@@ -21,7 +21,7 @@ class Tokenss {
 public class no{
 
     static int result = 0;
-    static boolean flag_paran = false; static boolean flag_var = false; static String log_expr = "";
+    static boolean flag_var = false;
     static String cachedSdkPath = null;
 
     public static void main(String[] args) throws IOException, InterruptedException{
@@ -33,7 +33,7 @@ public class no{
         }
 
         String contents = Files.readString(Path.of(args[0])).trim() + " ";
-        String tokens[] = {"_return", "int_lit", "plus", "minus", "mult", "div", "open_para", "close_para", "_variable", "var_name", "_equal", "_and", "_or", "_not", "semi"}; //14
+        String tokens[] = {"_return", "int_lit", "plus", "minus", "mult", "div", "open_para", "close_para", "_variable", "var_name", "_equal", "_and", "_or", "_not", "equals", "less", "equals_less", "more", "equals_more", "not_equals", "semi"}; //20
         ArrayList <Tokenss> tokenList = tokenization(contents, tokens);
         //printList(tokenList);
         HashMap <String, Tokenss> map = new HashMap<>();
@@ -51,7 +51,7 @@ public class no{
 
             //Seperate each ';' into sentences
             for(int i = 0; i < tokenList.size(); i++){
-                if(tokenList.get(i).type.equals(tokens[14])){
+                if(tokenList.get(i).type.equals(tokens[20])){
                     temp.add(tokenList.get(i));
                     sents.add(new ArrayList<>(temp));
                     temp.clear();
@@ -96,55 +96,25 @@ public class no{
                 //Return Expression
                 else if(sents.get(i).get(0).type.equals(tokens[0])){
                     int pos = 1;
-                    if(log_expr.equals("not"))
+                    if(sents.get(i).get(1).type.equals("_not"))
                         pos = 2;
 
-                    //Replacing all the variables with their value
                     for(int j = pos; j < sents.get(i).size() - 1; j++){
                         Tokenss t = sents.get(i).get(j);
 
-                        if(t.type.equals(tokens[11]) || t.type.equals(tokens[12])){
-                            if(check_paran(temp))
-                                solvePara(temp, tokens);
-
-                            mult_or_div(temp, tokens);
-                            add_or_sub(temp, tokens);
-
-                            result = Integer.parseInt(temp.get(0).value);
-                            temp.clear();
-                            continue;
-                        }
-
+                        // Replacing Variables with their Literal values
                         if(map.containsKey(t.value))
-                            temp.add(map.get(t.value)); //swaps the variable for its value
+                            temp.add(map.get(t.value));
                         else
                             temp.add(t);
-
                     }
 
                     //Evaluation
                     evaluation(temp, tokens);
-                    int r1 = Integer.parseInt(temp.get(0).value);
+                    solveLogOper(temp, tokens);
+                    solveLogExpr(temp, tokens);
 
-                    //Logical operators Evaluation
-                    if(log_expr.equals("and"))
-                        if((result != 0) && (r1 != 0))
-                            result = 1;
-                        else
-                            result = 0;
-                    else if (log_expr.equals("or"))
-                        if(result != 0 || r1 != 0)
-                            result = 1;
-                        else
-                            result = 0;
-                    else if(log_expr.equals("not"))
-                        if(r1 == 0)
-                            result = 1;
-                        else
-                            result = 0;
-                    else
-                        result = r1; // None present
-
+                    result = Integer.parseInt(temp.get(0).value);
                 }
                 else{
                     System.out.println("Syntax Error");
@@ -157,7 +127,8 @@ public class no{
         else{
             //If no variable is present
             evaluation(tokenList, tokens);
-
+            solveLogOper(tokenList, tokens);
+            solveLogExpr(tokenList, tokens);
             result = Integer.parseInt(tokenList.get(1).value);
         }
 
@@ -212,7 +183,7 @@ public class no{
         for (int i = 0; i < content.length(); i++) {
             char ch = content.charAt(i);
 
-            if (Character.isLetterOrDigit(ch))
+            if (Character.isLetterOrDigit(ch) || ch == '_')
                 str += ch;
             else{
                 if (!str.isEmpty()){
@@ -224,18 +195,13 @@ public class no{
                         list.add(new Tokenss(str,tokens[8]));
                         flag_var = true;
                     }
-                    else if(str.equals("and")){
-                        list.add(new Tokenss(str, tokens[11]));
-                        log_expr = "and";
-                    }
-                    else if (str.equals("or")){
-                        list.add(new Tokenss(str, tokens[12]));
-                        log_expr = "or";
-                    }
-                    else if(str.equals("not")){
-                        list.add(new Tokenss(str, tokens[13]));
-                        log_expr = "not";
-                    }
+                    else if(str.equals("and")) list.add(new Tokenss(str, tokens[11]));
+                    else if (str.equals("or")) list.add(new Tokenss(str, tokens[12]));
+                    else if(str.equals("not")) list.add(new Tokenss(str, tokens[13]));
+                    else if(str.equals("equals")) list.add(new Tokenss(str, tokens[14]));
+                    else if(str.equals("equals_less")) list.add(new Tokenss(str, tokens[16]));
+                    else if(str.equals("equals_more")) list.add(new Tokenss(str, tokens[18]));
+                    else if(str.equals("not_equals")) list.add(new Tokenss(str, tokens[19]));
                     else
                         list.add(new Tokenss(str, tokens[9]));
                     str = "";
@@ -247,13 +213,12 @@ public class no{
                     else if (ch == '-') type = tokens[3];
                     else if (ch == '*') type = tokens[4];
                     else if (ch == '/') type = tokens[5];
-                    else if (ch == '(') {
-                        type = tokens[6];
-                        flag_paran = true;
-                    }
+                    else if (ch == '(') type = tokens[6];
                     else if (ch == ')') type = tokens[7];
                     else if (ch == '=') type = tokens[10];
-                    else if (ch == ';') type = tokens[14];
+                    else if (ch == '<') type = tokens[15];
+                    else if (ch == '>') type = tokens[17];
+                    else if (ch == ';') type = tokens[20];
                     else {
                         System.out.println("Syntax Error");
                         System.exit(6);
@@ -310,7 +275,7 @@ public class no{
 
     //Solve Paranthesis
     private static void solvePara(ArrayList<Tokenss> list, String[] tokens){
-        int pos = 0;
+        int pos = -1;
         for(int i = 0; i < list.size(); i++){
             if(list.get(i).type.equals("close_para")){
                 pos = i;
@@ -318,13 +283,16 @@ public class no{
             }
         }
 
-        int pos1 = 0;
+        int pos1 = -1;
         for(int i = pos - 1; i >= 0; i--){
             if(list.get(i).type.equals("open_para")){
                 pos1 = i;
                 break;
             }
         }
+
+        if(pos1 == pos && pos == -1)
+            return;
 
         //Creating a subexpression to solve
         ArrayList<Tokenss> sublist = new ArrayList<>();
@@ -347,7 +315,7 @@ public class no{
             return;
     }
 
-    
+
     //Solving Operator Precendence without binary trees :) - Solves * and /
     private static void mult_or_div(ArrayList<Tokenss> tokenList, String[] tokens){
         int count = 1;
@@ -393,10 +361,88 @@ public class no{
         }
     }
 
-    private static void evaluation(ArrayList<Tokenss> tokenList, String tokens[]){
-        if(flag_paran)
-                solvePara(tokenList, tokens);
 
+    //Sovling Expressions that have and, or, not
+    private static void solveLogExpr(ArrayList<Tokenss> temp, String[] tokens){
+        for(int i = 1; i < temp.size(); i++){
+            if(temp.get(i).type.equals("_and") && temp.get(i + 1).type.equals("int_lit") && temp.get(i - 1).type.equals("int_lit")){
+                if(Integer.parseInt(temp.get(i + 1).value) > 0 && Integer.parseInt(temp.get(i - 1).value) > 0)
+                    resObjUpdation(1, tokens[1], temp, i);
+                else
+                    resObjUpdation(0, tokens[1], temp, i);
+                i = 0;
+            }
+            else if(temp.get(i).type.equals("_or") && temp.get(i + 1).type.equals("int_lit") && temp.get(i - 1).type.equals("int_lit")){
+                if(Integer.parseInt(temp.get(i + 1).value) > 0 || Integer.parseInt(temp.get(i - 1).value) > 0)
+                    resObjUpdation(1, tokens[1], temp, i);
+                else
+                    resObjUpdation(0, tokens[1], temp, i);
+                i = 0;
+            }
+            else if(temp.get(i).type.equals("_not") && temp.get(i + 1).type.equals("int_lit")){
+                if(Integer.parseInt(temp.get(i + 1).value) > 0){
+                    temp.set(i,  new Tokenss(Integer.toString(0), tokens[1]));
+                    temp.remove(i + 1);
+                }
+            }
+        }
+    }
+
+
+    //Solving expressions that have equal, not equal, >=, <=, >, <
+    private static void solveLogOper(ArrayList<Tokenss> temp, String[] tokens){
+        for(int i = 1; i < temp.size(); i++){
+            if(temp.get(i).type.equals("equals") && temp.get(i + 1).type.equals("int_lit") && temp.get(i - 1).type.equals("int_lit")){
+                if(temp.get(i + 1).value.equals(temp.get(i - 1).value))
+                    resObjUpdation(1, tokens[1], temp, i);
+                else
+                    resObjUpdation(0, tokens[1], temp, i);
+                i = 0;
+            }
+            else if(temp.get(i).type.equals("equals_more") && temp.get(i + 1).type.equals("int_lit") && temp.get(i - 1).type.equals("int_lit")){
+                if(Integer.parseInt(temp.get(i - 1).value) >= Integer.parseInt((temp.get(i + 1).value)))
+                    resObjUpdation(1, tokens[1], temp, i);
+                else
+                    resObjUpdation(0, tokens[1], temp, i);
+                i = 0;
+            }
+            else if(temp.get(i).type.equals("equals_less") && temp.get(i + 1).type.equals("int_lit") && temp.get(i - 1).type.equals("int_lit")){
+                if(Integer.parseInt(temp.get(i - 1).value) <= Integer.parseInt(temp.get(i + 1).value))
+                    resObjUpdation(1, tokens[1], temp, i);
+                else
+                    resObjUpdation(0, tokens[1], temp, i);
+                i = 0;
+            }
+            else if(temp.get(i).type.equals("not_equals") && temp.get(i + 1).type.equals("int_lit") && temp.get(i - 1).type.equals("int_lit")){
+                if(Integer.parseInt(temp.get(i + 1).value) != Integer.parseInt(temp.get(i - 1).value))
+                    resObjUpdation(1, tokens[1], temp, i);
+                else
+                    resObjUpdation(0, tokens[1], temp, i);
+                i = 0;
+            }
+            else if(temp.get(i).type.equals("more") && temp.get(i + 1).type.equals("int_lit") && temp.get(i - 1).type.equals("int_lit")){
+                if(Integer.parseInt(temp.get(i - 1).value) > Integer.parseInt(temp.get(i + 1).value))
+                    resObjUpdation(1, tokens[1], temp, i);
+                else
+                    resObjUpdation(0, tokens[1], temp, i);
+                i = 0;
+            }
+            else if(temp.get(i).type.equals("less") && temp.get(i + 1).type.equals("int_lit") && temp.get(i - 1).type.equals("int_lit")){
+                if(Integer.parseInt(temp.get(i - 1).value) < Integer.parseInt(temp.get(i + 1).value))
+                    resObjUpdation(1, tokens[1], temp, i);
+                else
+                    resObjUpdation(0, tokens[1], temp, i);
+                i = 0;
+            }
+            else
+                continue;
+        }
+    }
+
+
+    // Evaluation Syntax
+    private static void evaluation(ArrayList<Tokenss> tokenList, String tokens[]){
+            solvePara(tokenList, tokens);
             mult_or_div(tokenList, tokens);
             add_or_sub(tokenList, tokens);
     }
