@@ -21,13 +21,11 @@ class Tokenss {
 public class no{
 
     static int result = 0;
-    static boolean flag_paran = false;; static boolean flag_var = false;
+    static boolean flag_paran = false; static boolean flag_var = false; static String log_expr = "";
     static String cachedSdkPath = null;
 
     public static void main(String[] args) throws IOException, InterruptedException{
-
         long start = System.nanoTime();
-
         // Checks if the file inputted is correct
         if(args[0].indexOf(".hydro") == -1){
             System.out.print("Incorrect input");
@@ -35,7 +33,7 @@ public class no{
         }
 
         String contents = Files.readString(Path.of(args[0])).trim() + " ";
-        String tokens[] = {"_return", "int_lit", "plus", "minus", "mult", "div", "open_para", "close_para", "_variable", "var_name", "_equal", "semi"}; //11
+        String tokens[] = {"_return", "int_lit", "plus", "minus", "mult", "div", "open_para", "close_para", "_variable", "var_name", "_equal", "_and", "_or", "_not", "semi"}; //14
         ArrayList <Tokenss> tokenList = tokenization(contents, tokens);
         //printList(tokenList);
         HashMap <String, Tokenss> map = new HashMap<>();
@@ -46,7 +44,6 @@ public class no{
             System.exit(7);
         }
 
-
         //To evaluate code that has variables
         if(flag_var){
             ArrayList<ArrayList<Tokenss>> sents = new ArrayList<>();
@@ -54,7 +51,7 @@ public class no{
 
             //Seperate each ';' into sentences
             for(int i = 0; i < tokenList.size(); i++){
-                if(tokenList.get(i).type.equals(tokens[11])){
+                if(tokenList.get(i).type.equals(tokens[14])){
                     temp.add(tokenList.get(i));
                     sents.add(new ArrayList<>(temp));
                     temp.clear();
@@ -77,12 +74,7 @@ public class no{
                             temp.add(t);
                     }
 
-                    if(check_paran(temp))
-                        solvePara(temp, tokens);
-
-                    mult_or_div(temp, tokens);
-                    add_or_sub(temp, tokens);
-
+                    evaluation(temp, tokens);
                     map.put(sents.get(i).get(1).value, temp.get(0));
                 }
 
@@ -97,35 +89,62 @@ public class no{
                             temp.add(t);
                     }
 
-                    if(check_paran(temp))
-                        solvePara(temp,tokens);
-
-                    mult_or_div(temp, tokens);
-                    add_or_sub(temp, tokens);
-
+                    evaluation(temp, tokens);
                     map.put(sents.get(i).get(0).value, temp.get(0));
                 }
 
                 //Return Expression
                 else if(sents.get(i).get(0).type.equals(tokens[0])){
+                    int pos = 1;
+                    if(log_expr.equals("not"))
+                        pos = 2;
+
                     //Replacing all the variables with their value
-                    for(int j = 1; j < sents.get(i).size() - 1; j++){
+                    for(int j = pos; j < sents.get(i).size() - 1; j++){
                         Tokenss t = sents.get(i).get(j);
+
+                        if(t.type.equals(tokens[11]) || t.type.equals(tokens[12])){
+                            if(check_paran(temp))
+                                solvePara(temp, tokens);
+
+                            mult_or_div(temp, tokens);
+                            add_or_sub(temp, tokens);
+
+                            result = Integer.parseInt(temp.get(0).value);
+                            temp.clear();
+                            continue;
+                        }
 
                         if(map.containsKey(t.value))
                             temp.add(map.get(t.value)); //swaps the variable for its value
                         else
                             temp.add(t);
+
                     }
 
                     //Evaluation
-                    if(check_paran(temp))
-                        solvePara(temp, tokens);
+                    evaluation(temp, tokens);
+                    int r1 = Integer.parseInt(temp.get(0).value);
 
-                    mult_or_div(temp, tokens);
-                    add_or_sub(temp, tokens);
+                    //Logical operators Evaluation
+                    if(log_expr.equals("and"))
+                        if((result != 0) && (r1 != 0))
+                            result = 1;
+                        else
+                            result = 0;
+                    else if (log_expr.equals("or"))
+                        if(result != 0 || r1 != 0)
+                            result = 1;
+                        else
+                            result = 0;
+                    else if(log_expr.equals("not"))
+                        if(r1 == 0)
+                            result = 1;
+                        else
+                            result = 0;
+                    else
+                        result = r1; // None present
 
-                    result = Integer.parseInt(temp.get(0).value);
                 }
                 else{
                     System.out.println("Syntax Error");
@@ -137,11 +156,7 @@ public class no{
         }
         else{
             //If no variable is present
-            if(flag_paran)
-                solvePara(tokenList, tokens);
-
-            mult_or_div(tokenList, tokens);
-            add_or_sub(tokenList, tokens);
+            evaluation(tokenList, tokens);
 
             result = Integer.parseInt(tokenList.get(1).value);
         }
@@ -176,9 +191,9 @@ public class no{
         p.waitFor();
 
         System.out.println("Program Exit Code: " + p.exitValue());
+
         long end = System.nanoTime();
         long time = (end - start)/1000000;
-
         System.out.print("Time taken: " + time + "ms");
     }
 
@@ -209,6 +224,18 @@ public class no{
                         list.add(new Tokenss(str,tokens[8]));
                         flag_var = true;
                     }
+                    else if(str.equals("and")){
+                        list.add(new Tokenss(str, tokens[11]));
+                        log_expr = "and";
+                    }
+                    else if (str.equals("or")){
+                        list.add(new Tokenss(str, tokens[12]));
+                        log_expr = "or";
+                    }
+                    else if(str.equals("not")){
+                        list.add(new Tokenss(str, tokens[13]));
+                        log_expr = "not";
+                    }
                     else
                         list.add(new Tokenss(str, tokens[9]));
                     str = "";
@@ -226,7 +253,7 @@ public class no{
                     }
                     else if (ch == ')') type = tokens[7];
                     else if (ch == '=') type = tokens[10];
-                    else if (ch == ';') type = tokens[11];
+                    else if (ch == ';') type = tokens[14];
                     else {
                         System.out.println("Syntax Error");
                         System.exit(6);
@@ -320,7 +347,7 @@ public class no{
             return;
     }
 
-
+    
     //Solving Operator Precendence without binary trees :) - Solves * and /
     private static void mult_or_div(ArrayList<Tokenss> tokenList, String[] tokens){
         int count = 1;
@@ -364,6 +391,14 @@ public class no{
             }
             i++;
         }
+    }
+
+    private static void evaluation(ArrayList<Tokenss> tokenList, String tokens[]){
+        if(flag_paran)
+                solvePara(tokenList, tokens);
+
+            mult_or_div(tokenList, tokens);
+            add_or_sub(tokenList, tokens);
     }
 
 
