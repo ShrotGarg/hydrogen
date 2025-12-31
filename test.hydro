@@ -1,6 +1,5 @@
 var x = 15;
 var y = 10;
-y = (y + x) * 3;
 
 var z = y;
-return z - 5;
+return z * 5 and y - 5;
