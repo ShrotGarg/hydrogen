@@ -33,7 +33,7 @@ public class no{
         }
 
         String contents = Files.readString(Path.of(args[0])).trim() + " ";
-        String tokens[] = {"_return", "int_lit", "plus", "minus", "mult", "div", "open_para", "close_para", "_variable", "var_name", "_equal", "_and", "_or", "_not", "equals", "less", "equals_less", "more", "equals_more", "not_equals", "semi"}; //20
+        String tokens[] = {"_return", "int_lit", "plus", "minus", "mult", "div", "open_para", "close_para", "_variable", "var_name", "_equal", "_and", "_or", "_not", "equals", "less", "equals_less", "more", "equals_more", "not_equals", "power", "semi"}; //21
         ArrayList <Tokenss> tokenList = tokenization(contents, tokens);
         //printList(tokenList);
         HashMap <String, Tokenss> map = new HashMap<>();
@@ -51,7 +51,7 @@ public class no{
 
             //Seperate each ';' into sentences
             for(int i = 0; i < tokenList.size(); i++){
-                if(tokenList.get(i).type.equals(tokens[20])){
+                if(tokenList.get(i).type.equals(tokens[21])){
                     temp.add(tokenList.get(i));
                     sents.add(new ArrayList<>(temp));
                     temp.clear();
@@ -155,7 +155,7 @@ public class no{
                 solveLogExpr(tokenList, tokens);
                 change = (before == tokenList.size()) ? false : true;
             }while(change);
-            result = Integer.parseInt(tokenList.get(0).value);
+            result = Integer.parseInt(tokenList.get(1).value);
         }
 
         //To reduce runtime
@@ -244,7 +244,8 @@ public class no{
                     else if (ch == '=') type = tokens[10];
                     else if (ch == '<') type = tokens[15];
                     else if (ch == '>') type = tokens[17];
-                    else if (ch == ';') type = tokens[20];
+                    else if (ch == '^') type = tokens[20];
+                    else if (ch == ';') type = tokens[21];
                     else {
                         System.out.println("Syntax Error");
                         System.exit(6);
@@ -341,6 +342,21 @@ public class no{
             return;
     }
 
+
+    //Solve exponents
+    private static void solvePower(ArrayList<Tokenss> list, String[] tokens){
+        int i = 1;
+        while(i < list.size()){
+            if(list.get(i).type.equals(tokens[20])){
+                int base = Integer.parseInt(list.get(i - 1).value);
+                int power = Integer.parseInt(list.get(i + 1).value);
+                int val = (int)(Math.pow(base, power));
+                resObjUpdation(val, tokens[1], list, i);
+                i--;
+            }
+            i++;
+        }
+    }
 
     //Solving Operator Precendence without binary trees :) - Solves * and /
     private static void mult_or_div(ArrayList<Tokenss> tokenList, String[] tokens){
@@ -469,6 +485,7 @@ public class no{
     // Evaluation Syntax
     private static void evaluation(ArrayList<Tokenss> tokenList, String tokens[]){
             solvePara(tokenList, tokens);
+            solvePower(tokenList, tokens);
             mult_or_div(tokenList, tokens);
             add_or_sub(tokenList, tokens);
     }
