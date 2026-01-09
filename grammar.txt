@@ -1,0 +1,25 @@
+Variable Declaration:
+var x = 5;
+var y = 10;
+
+Variable Assignment:
+x = 10;
+
+Logical Operators [Returns 1 = true, 0 = false]
+x = x equals y;
+x = x not_equals y;
+x = x < y;
+x = x > y
+x = x equals_more y;
+x = x equals_less y;
+
+Logical Expressions [Returns 1 = true, 0 = false]
+y = x and y;
+y = x or y;
+y = not x;
+
+Arithemtic Operators [Operator Precendence: PEMDAS]
+x = 2 * 3 + 5 - 2 / 2^2;
+
+Return:
+return x * 3;
