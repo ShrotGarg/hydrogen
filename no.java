@@ -21,7 +21,7 @@ class Tokenss {
 public class no{
 
     static int result = 0;
-    static boolean flag_var = false;
+    static boolean flag_var = false; static boolean cond_met = false;
     static String cachedSdkPath = null;
 
     public static void main(String[] args) throws IOException, InterruptedException{
@@ -33,7 +33,7 @@ public class no{
         }
 
         String contents = Files.readString(Path.of(args[0])).trim() + " ";
-        String tokens[] = {"_return", "int_lit", "plus", "minus", "mult", "div", "open_para", "close_para", "_variable", "var_name", "_equal", "_and", "_or", "_not", "equals", "less", "equals_less", "more", "equals_more", "not_equals", "power", "semi"}; //21
+        String tokens[] = {"_return", "int_lit", "plus", "minus", "mult", "div", "open_para", "close_para", "_variable", "var_name", "_equal", "_and", "_or", "_not", "equals", "less", "equals_less", "more", "equals_more", "not_equals", "power", "_if", "_elif", "_else", "open_brac", "close_brac", "semi"}; //26
         ArrayList <Tokenss> tokenList = tokenization(contents, tokens);
         //printList(tokenList);
         HashMap <String, Tokenss> map = new HashMap<>();
@@ -49,9 +49,9 @@ public class no{
             ArrayList<ArrayList<Tokenss>> sents = new ArrayList<>();
             ArrayList<Tokenss> temp = new ArrayList<>();
 
-            //Seperate each ';' into sentences
+            //Seperate each '; { } ' into seperate sentences
             for(int i = 0; i < tokenList.size(); i++){
-                if(tokenList.get(i).type.equals(tokens[21])){
+                if(tokenList.get(i).type.equals(tokens[26]) || tokenList.get(i).type.equals(tokens[24]) || tokenList.get(i).type.equals(tokens[25])){
                     temp.add(tokenList.get(i));
                     sents.add(new ArrayList<>(temp));
                     temp.clear();
@@ -108,6 +108,93 @@ public class no{
 
                     map.put(sents.get(i).get(0).value, temp.get(0));
                 }
+
+                //Conditional Expressions i.e. If
+                else if(sents.get(i).get(0).type.equals(tokens[21])){
+                    int pos = 1;
+                    if(sents.get(i).get(1).type.equals("_not"))
+                        pos = 2;
+
+                    for(int j = pos; j < sents.get(i).size() - 1; j++){
+                        Tokenss t = sents.get(i).get(j);
+                        if(map.containsKey(t.value))
+                            temp.add(map.get(t.value));
+                        else
+                            temp.add(t);
+                    }
+
+                    evaluation(temp, tokens);
+                    boolean change = false;
+                    do{
+                        int before = temp.size();
+                        solveLogOper(temp, tokens);
+                        solveLogExpr(temp, tokens);
+                        change = (before == temp.size()) ? false : true;
+                    }while(change);
+
+                    int outcome = Integer.parseInt(temp.get(0).value); //The value of our condition
+
+                    if(outcome == 1){
+                        cond_met = true;
+                    }
+                    else{
+                        i = find_the_bracket(i, sents, tokens);
+                        cond_met = false;
+                    }
+                }
+
+
+                //Elif
+                else if(sents.get(i).get(0).type.equals(tokens[22])){
+                    if(cond_met == true && sents.get(i).get(0).type.equals(tokens[22])){
+                        i = find_the_bracket(i, sents, tokens);
+                        continue;
+                    }
+
+                    int pos = 1;
+                    if(sents.get(i).get(1).type.equals("_not"))
+                        pos = 2;
+
+                    for(int j = pos; j < sents.get(i).size() - 1; j++){
+                        Tokenss t = sents.get(i).get(j);
+                        if(map.containsKey(t.value))
+                            temp.add(map.get(t.value));
+                        else
+                            temp.add(t);
+                    }
+
+                    evaluation(temp, tokens);
+                    boolean change = false;
+                    do{
+                        int before = temp.size();
+                        solveLogOper(temp, tokens);
+                        solveLogExpr(temp, tokens);
+                        change = (before == temp.size()) ? false : true;
+                    }while(change);
+
+                    int outcome = Integer.parseInt(temp.get(0).value); //The value of our elif condition
+
+                    if(outcome == 1){
+                        cond_met = true;
+                    }
+                    else{
+                        i = find_the_bracket(i, sents, tokens);
+                        cond_met = false;
+                    }
+                }
+
+                //Else
+                else if(sents.get(i).get(0).type.equals(tokens[23])){
+                    if(cond_met == true && sents.get(i).get(0).type.equals(tokens[23])){
+                        i = find_the_bracket(i, sents, tokens);
+                        continue;
+                    }
+
+                    continue;
+                }
+
+                else if(sents.get(i).get(0).type.equals(tokens[25]))
+                    continue;
 
                 //Return Expression
                 else if(sents.get(i).get(0).type.equals(tokens[0])){
@@ -179,7 +266,6 @@ public class no{
         bout.close();
         fout.close();
 
-
         //Running terminal Commands
         String sdkpath = getSDKPath();
         runCommand("nasm", "-f", "macho64", "test.asm", "-o", "test.o");
@@ -193,6 +279,7 @@ public class no{
         long time = (end - start)/1000000;
         System.out.print("Time taken: " + time + "ms");
     }
+
 
     //Helper Function to debug code
     private static void printList(ArrayList<Tokenss> list){
@@ -228,6 +315,9 @@ public class no{
                     else if(str.equals("equals_less")) list.add(new Tokenss(str, tokens[16]));
                     else if(str.equals("equals_more")) list.add(new Tokenss(str, tokens[18]));
                     else if(str.equals("not_equals")) list.add(new Tokenss(str, tokens[19]));
+                    else if(str.equals("if")) list.add(new Tokenss(str, tokens[21]));
+                    else if(str.equals("elif")) list.add(new Tokenss(str, tokens[22]));
+                    else if(str.equals("else")) list.add(new Tokenss(str, tokens[23]));
                     else
                         list.add(new Tokenss(str, tokens[9]));
                     str = "";
@@ -245,7 +335,9 @@ public class no{
                     else if (ch == '<') type = tokens[15];
                     else if (ch == '>') type = tokens[17];
                     else if (ch == '^') type = tokens[20];
-                    else if (ch == ';') type = tokens[21];
+                    else if (ch == '{') type = tokens[24];
+                    else if (ch == '}') type = tokens[25];
+                    else if (ch == ';') type = tokens[26];
                     else {
                         System.out.println("Syntax Error");
                         System.exit(6);
@@ -256,6 +348,7 @@ public class no{
         }
         return list;
     }
+
 
     // To check if str is a number
     private static boolean isNumber(String str){
@@ -357,6 +450,7 @@ public class no{
             i++;
         }
     }
+
 
     //Solving Operator Precendence without binary trees :) - Solves * and /
     private static void mult_or_div(ArrayList<Tokenss> tokenList, String[] tokens){
@@ -484,10 +578,10 @@ public class no{
 
     // Evaluation Syntax
     private static void evaluation(ArrayList<Tokenss> tokenList, String tokens[]){
-            solvePara(tokenList, tokens);
-            solvePower(tokenList, tokens);
-            mult_or_div(tokenList, tokens);
-            add_or_sub(tokenList, tokens);
+        solvePara(tokenList, tokens);
+        solvePower(tokenList, tokens);
+        mult_or_div(tokenList, tokens);
+        add_or_sub(tokenList, tokens);
     }
 
 
@@ -498,6 +592,19 @@ public class no{
         listTokens.remove(i);
         listTokens.remove(i);
         return obj;
+    }
+
+
+    //Finding the Brackets for Conditional Statements
+    private static int find_the_bracket(int pos, ArrayList<ArrayList<Tokenss>> sents, String[] tokens){
+        for(; pos < sents.size(); pos++){
+            for(int i = 0; i < sents.get(pos).size(); i++){
+                if(sents.get(pos).get(i).type.equals(tokens[25]))
+                    return pos;
+            }
+        }
+
+        return -1;
     }
 
 
