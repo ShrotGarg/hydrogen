@@ -23,6 +23,7 @@ public class no{
     static int result = 0;
     static boolean flag_var = false; static boolean cond_met = false;
     static String cachedSdkPath = null;
+    static ArrayList<Tokenss> temp = new ArrayList<>();
 
     public static void main(String[] args) throws IOException, InterruptedException{
         long start = System.nanoTime();
@@ -47,7 +48,6 @@ public class no{
         //To evaluate code that has variables
         if(flag_var){
             ArrayList<ArrayList<Tokenss>> sents = new ArrayList<>();
-            ArrayList<Tokenss> temp = new ArrayList<>();
 
             //Seperate each '; { } ' into seperate sentences
             for(int i = 0; i < tokenList.size(); i++){
@@ -61,30 +61,11 @@ public class no{
             }
             temp.clear();
 
+
             for(int i = 0; i < sents.size(); i++){
+                if(sents.get(i).get(0).type.equals(tokens[8]) && sents.get(i).get(1).type.equals(tokens[9]) && sents.get(i).get(2).type.equals(tokens[10]))
+                    variable_declaration(sents, i, map, tokens);
 
-                //Variable Declaration
-                if(sents.get(i).get(0).type.equals(tokens[8]) && sents.get(i).get(1).type.equals(tokens[9]) && sents.get(i).get(2).type.equals(tokens[10])){
-                    for(int j = 3; j < sents.get(i).size(); j++){
-                        Tokenss t = sents.get(i).get(j);
-
-                        if(map.containsKey(t.value))
-                            temp.add(map.get(t.value));
-                        else
-                            temp.add(t);
-                    }
-
-                    evaluation(temp, tokens);
-                    boolean change = false;
-                    do{
-                        int before = temp.size();
-                        solveLogOper(temp, tokens);
-                        solveLogExpr(temp, tokens);
-                        change = (before == temp.size()) ? false : true;
-                    }while(change);
-
-                    map.put(sents.get(i).get(1).value, temp.get(0));
-                }
 
                 //Assignment of Variables Expression
                 else if(sents.get(i).get(0).type.equals(tokens[9]) && sents.get(i).get(1).type.equals(tokens[10])){
@@ -380,6 +361,32 @@ public class no{
             return false;
 
         return true;
+    }
+
+
+    //Variable Declaration
+    private static void variable_declaration(ArrayList<ArrayList<Tokenss>> sents, int i, HashMap<String, Tokenss> map, String tokens[]){
+        if(sents.get(i).get(0).type.equals(tokens[8]) && sents.get(i).get(1).type.equals(tokens[9]) && sents.get(i).get(2).type.equals(tokens[10])){
+            for(int j = 3; j < sents.get(i).size(); j++){
+                Tokenss t = sents.get(i).get(j);
+
+                if(map.containsKey(t.value))
+                    temp.add(map.get(t.value));
+                else
+                    temp.add(t);
+            }
+
+            evaluation(temp, tokens);
+            boolean change = false;
+            do{
+                int before = temp.size();
+                solveLogOper(temp, tokens);
+                solveLogExpr(temp, tokens);
+                change = (before == temp.size()) ? false : true;
+            }while(change);
+
+            map.put(sents.get(i).get(1).value, temp.get(0));
+        }
     }
 
 
