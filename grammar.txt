@@ -21,5 +21,19 @@ y = not x;
 Arithemtic Operators [Operator Precendence: PEMDAS]
 x = 2 * 3 + 5 - 2 / 2^2;
 
+Conditional Flow [IF - ELIF - ELSE]
+if x equals 3{
+    x = 3;
+}
+elif x > 3{
+    x = 4;
+}
+elif x < 3{
+    x = 1;
+}
+else{
+    x = x + 1;
+}
+
 Return:
 return x * 3;
