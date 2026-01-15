@@ -63,32 +63,13 @@ public class no{
 
 
             for(int i = 0; i < sents.size(); i++){
+                //Variable Declaration
                 if(sents.get(i).get(0).type.equals(tokens[8]) && sents.get(i).get(1).type.equals(tokens[9]) && sents.get(i).get(2).type.equals(tokens[10]))
                     variable_declaration(sents, i, map, tokens);
 
-
                 //Assignment of Variables Expression
-                else if(sents.get(i).get(0).type.equals(tokens[9]) && sents.get(i).get(1).type.equals(tokens[10])){
-                    for(int j = 2; j < sents.get(i).size(); j++){
-                        Tokenss t = sents.get(i).get(j);
-
-                        if(map.containsKey(t.value))
-                            temp.add(map.get(t.value));
-                        else
-                            temp.add(t);
-                    }
-
-                    evaluation(temp, tokens);
-                    boolean change = false;
-                    do{
-                        int before = temp.size();
-                        solveLogOper(temp, tokens);
-                        solveLogExpr(temp, tokens);
-                        change = (before == temp.size()) ? false : true;
-                    }while(change);
-
-                    map.put(sents.get(i).get(0).value, temp.get(0));
-                }
+                else if(sents.get(i).get(0).type.equals(tokens[9]) && sents.get(i).get(1).type.equals(tokens[10]))
+                    variable_assignment(sents, i, map, tokens);
 
                 //Conditional Expressions i.e. If
                 else if(sents.get(i).get(0).type.equals(tokens[21])){
@@ -366,27 +347,50 @@ public class no{
 
     //Variable Declaration
     private static void variable_declaration(ArrayList<ArrayList<Tokenss>> sents, int i, HashMap<String, Tokenss> map, String tokens[]){
-        if(sents.get(i).get(0).type.equals(tokens[8]) && sents.get(i).get(1).type.equals(tokens[9]) && sents.get(i).get(2).type.equals(tokens[10])){
-            for(int j = 3; j < sents.get(i).size(); j++){
-                Tokenss t = sents.get(i).get(j);
+        for(int j = 3; j < sents.get(i).size(); j++){
+            Tokenss t = sents.get(i).get(j);
 
-                if(map.containsKey(t.value))
-                    temp.add(map.get(t.value));
-                else
-                    temp.add(t);
-            }
-
-            evaluation(temp, tokens);
-            boolean change = false;
-            do{
-                int before = temp.size();
-                solveLogOper(temp, tokens);
-                solveLogExpr(temp, tokens);
-                change = (before == temp.size()) ? false : true;
-            }while(change);
-
-            map.put(sents.get(i).get(1).value, temp.get(0));
+            if(map.containsKey(t.value))
+                temp.add(map.get(t.value));
+            else
+                temp.add(t);
         }
+
+        evaluation(temp, tokens);
+        boolean change = false;
+        do{
+            int before = temp.size();
+            solveLogOper(temp, tokens);
+            solveLogExpr(temp, tokens);
+            change = (before == temp.size()) ? false : true;
+        }while(change);
+
+        map.put(sents.get(i).get(1).value, temp.get(0));
+    }
+
+
+
+    //Variable Assignment/Replacing
+    private static void variable_assignment(ArrayList<ArrayList<Tokenss>> sents, int i, HashMap<String, Tokenss> map, String[] tokens){
+        for(int j = 2; j < sents.get(i).size(); j++){
+            Tokenss t = sents.get(i).get(j);
+
+            if(map.containsKey(t.value))
+                temp.add(map.get(t.value));
+            else
+                temp.add(t);
+        }
+
+        evaluation(temp, tokens);
+        boolean change = false;
+        do{
+            int before = temp.size();
+            solveLogOper(temp, tokens);
+            solveLogExpr(temp, tokens);
+            change = (before == temp.size()) ? false : true;
+        }while(change);
+
+        map.put(sents.get(i).get(0).value, temp.get(0));
     }
 
 
