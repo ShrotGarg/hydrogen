@@ -21,9 +21,11 @@ y = not x;
 Arithemtic Operators [Operator Precendence: PEMDAS]
 x = 2 * 3 + 5 - 2 / 2^2;
 
-Conditional Flow [IF - ELIF - ELSE]
+Conditional Flow [IF - ELIF - ELSE] with nesting
 if x equals 3{
-    x = 3;
+    if x not_equals 2{
+        y = 3;
+    }
 }
 elif x > 3{
     x = 4;
