@@ -23,7 +23,6 @@ public class no{
     static int result = 0;
     static boolean flag_var = false; static boolean cond_met = false;
     static String cachedSdkPath = null;
-    static ArrayList<Tokenss> temp = new ArrayList<>();
 
     public static void main(String[] args) throws IOException, InterruptedException{
         long start = System.nanoTime();
@@ -46,166 +45,20 @@ public class no{
         }
 
         //To evaluate code that has variables
-        if(flag_var){
-            ArrayList<ArrayList<Tokenss>> sents = new ArrayList<>();
-
-            //Seperate each '; { } ' into seperate sentences
-            for(int i = 0; i < tokenList.size(); i++){
-                if(tokenList.get(i).type.equals(tokens[26]) || tokenList.get(i).type.equals(tokens[24]) || tokenList.get(i).type.equals(tokens[25])){
-                    temp.add(tokenList.get(i));
-                    sents.add(new ArrayList<>(temp));
-                    temp.clear();
-                }
-                else
-                    temp.add(tokenList.get(i));
-            }
-            temp.clear();
-
-
-            for(int i = 0; i < sents.size(); i++){
-                //Variable Declaration
-                if(sents.get(i).get(0).type.equals(tokens[8]) && sents.get(i).get(1).type.equals(tokens[9]) && sents.get(i).get(2).type.equals(tokens[10]))
-                    variable_declaration(sents, i, map, tokens);
-
-                //Assignment of Variables Expression
-                else if(sents.get(i).get(0).type.equals(tokens[9]) && sents.get(i).get(1).type.equals(tokens[10]))
-                    variable_assignment(sents, i, map, tokens);
-
-                //Conditional Expressions i.e. If
-                else if(sents.get(i).get(0).type.equals(tokens[21])){
-                    int pos = 1;
-                    if(sents.get(i).get(1).type.equals("_not"))
-                        pos = 2;
-
-                    for(int j = pos; j < sents.get(i).size() - 1; j++){
-                        Tokenss t = sents.get(i).get(j);
-                        if(map.containsKey(t.value))
-                            temp.add(map.get(t.value));
-                        else
-                            temp.add(t);
-                    }
-
-                    evaluation(temp, tokens);
-                    boolean change = false;
-                    do{
-                        int before = temp.size();
-                        solveLogOper(temp, tokens);
-                        solveLogExpr(temp, tokens);
-                        change = (before == temp.size()) ? false : true;
-                    }while(change);
-
-                    int outcome = Integer.parseInt(temp.get(0).value); //The value of our condition
-
-                    if(outcome == 1){
-                        cond_met = true;
-                    }
-                    else{
-                        i = find_the_bracket(i, sents, tokens);
-                        cond_met = false;
-                    }
-                }
-
-
-                //Elif
-                else if(sents.get(i).get(0).type.equals(tokens[22])){
-                    if(cond_met == true && sents.get(i).get(0).type.equals(tokens[22])){
-                        i = find_the_bracket(i, sents, tokens);
-                        continue;
-                    }
-
-                    int pos = 1;
-                    if(sents.get(i).get(1).type.equals("_not"))
-                        pos = 2;
-
-                    for(int j = pos; j < sents.get(i).size() - 1; j++){
-                        Tokenss t = sents.get(i).get(j);
-                        if(map.containsKey(t.value))
-                            temp.add(map.get(t.value));
-                        else
-                            temp.add(t);
-                    }
-
-                    evaluation(temp, tokens);
-                    boolean change = false;
-                    do{
-                        int before = temp.size();
-                        solveLogOper(temp, tokens);
-                        solveLogExpr(temp, tokens);
-                        change = (before == temp.size()) ? false : true;
-                    }while(change);
-
-                    int outcome = Integer.parseInt(temp.get(0).value); //The value of our elif condition
-
-                    if(outcome == 1){
-                        cond_met = true;
-                    }
-                    else{
-                        i = find_the_bracket(i, sents, tokens);
-                        cond_met = false;
-                    }
-                }
-
-                //Else
-                else if(sents.get(i).get(0).type.equals(tokens[23])){
-                    if(cond_met == true && sents.get(i).get(0).type.equals(tokens[23])){
-                        i = find_the_bracket(i, sents, tokens);
-                        continue;
-                    }
-
-                    continue;
-                }
-
-                else if(sents.get(i).get(0).type.equals(tokens[25]))
-                    continue;
-
-                //Return Expression
-                else if(sents.get(i).get(0).type.equals(tokens[0])){
-                    int pos = 1;
-                    if(sents.get(i).get(1).type.equals("_not"))
-                        pos = 2;
-
-                    for(int j = pos; j < sents.get(i).size() - 1; j++){
-                        Tokenss t = sents.get(i).get(j);
-
-                        // Replacing Variables with their Literal values
-                        if(map.containsKey(t.value))
-                            temp.add(map.get(t.value));
-                        else
-                            temp.add(t);
-                    }
-
-                    //Evaluation
-                    evaluation(temp, tokens);
-                    boolean change = false;
-                    do{
-                        int before = temp.size();
-                        solveLogOper(temp, tokens);
-                        solveLogExpr(temp, tokens);
-                        change = (before == temp.size()) ? false : true;
-                    }while(change);
-
-                    result = Integer.parseInt(temp.get(0).value);
-                }
-                else{
-                    System.out.println("Syntax Error");
-                    System.exit(8);
-                }
-
+        ArrayList<ArrayList<Tokenss>> sents = new ArrayList<>();
+        ArrayList<Tokenss> temp = new ArrayList<>();
+        //Seperate each '; { } ' into seperate sentences
+        for(int i = 0; i < tokenList.size(); i++){
+            if(tokenList.get(i).type.equals(tokens[26]) || tokenList.get(i).type.equals(tokens[24]) || tokenList.get(i).type.equals(tokens[25])){
+                temp.add(tokenList.get(i));
+                sents.add(new ArrayList<>(temp));
                 temp.clear();
             }
+            else
+                temp.add(tokenList.get(i));
         }
-        else{
-            //If no variable is present
-            evaluation(tokenList, tokens);
-            boolean change = false;
-            do{
-                int before = tokenList.size();
-                solveLogOper(tokenList, tokens);
-                solveLogExpr(tokenList, tokens);
-                change = (before == tokenList.size()) ? false : true;
-            }while(change);
-            result = Integer.parseInt(tokenList.get(1).value);
-        }
+        temp.clear();
+        compile(0, sents.size(), sents, map, tokens);
 
         //To reduce runtime
         StringBuilder asm_code = new StringBuilder();
@@ -328,8 +181,8 @@ public class no{
 
         for(int i = 0; i < list.size() - 1; i++){
             //Two operators or operands can't be one after the other
-            if(list.get(i).type.equals(list.get(i + 1).type) && !(list.get(i).type.equals("open_para") || list.get(i).type.equals("close_para")))
-                return false;
+            //if(list.get(i).type.equals(list.get(i + 1).type) && !(list.get(i).type.equals("open_para") || list.get(i).type.equals("close_para")))
+                //return false;
 
             //Checking the paranthesis count
             if(list.get(i).type.equals("open_para"))
@@ -345,8 +198,96 @@ public class no{
     }
 
 
+    //Parsing of Tokens/ Compiler Logic
+    private static void compile(int i, int end, ArrayList<ArrayList<Tokenss>> sents, HashMap<String, Tokenss> map, String[] tokens){
+        boolean condition = false;
+
+        for(; i < end; i++){
+
+            //Condition: If
+            if(sents.get(i).get(0).type.equals(tokens[21])){
+                ArrayList<Tokenss> temp = new ArrayList<>();
+
+                for(int j = 1; j < sents.get(i).size() - 1; j++){
+                    Tokenss t = sents.get(i).get(j);
+                    if(map.containsKey(t.value)) temp.add(map.get(t.value));
+                    else temp.add(t);
+                }
+
+                evaluation(temp, tokens);
+                int outcome = Integer.parseInt(temp.get(0).value);
+                int closing = find_the_bracket(i, sents, tokens);
+
+                if(outcome == 1){
+                    condition = true;
+                    compile(i + 1, closing, sents, map, tokens);
+                }
+                else
+                    condition = false;
+
+                i = closing;
+            }
+
+            //Condition: Elif
+            else if(sents.get(i).get(0).type.equals(tokens[22])){
+                ArrayList<Tokenss> temp = new ArrayList<>();
+
+                for(int j = 1; j < sents.get(i).size() - 1; j++){
+                    Tokenss t = sents.get(i).get(j);
+                    if(map.containsKey(t.value)) temp.add(map.get(t.value));
+                    else temp.add(t);
+                }
+
+                evaluation(temp, tokens);
+                int closing = find_the_bracket(i, sents, tokens);
+
+                if(!condition){
+                    int outcome = Integer.parseInt(temp.get(0).value);
+                    if(outcome == 1){
+                        condition = true;
+                        compile(i + 1, closing, sents, map, tokens);
+                    }
+                    else
+                        condition = false;
+                }
+
+                i = closing;
+            }
+
+            //Condition: Else
+            else if(sents.get(i).get(0).type.equals(tokens[23])){
+                int closing = find_the_bracket(i, sents, tokens);
+
+                if(!condition)
+                    compile(i + 1, closing, sents, map, tokens);
+
+                i = closing;
+            }
+
+
+            //Normal Evaluation: Var stuff and arithmetic
+            else{
+                if(sents.get(i).get(0).type.equals(tokens[8]) && sents.get(i).get(1).type.equals(tokens[9]) && sents.get(i).get(2).type.equals(tokens[10]))
+                    variable_declaration(sents, i, map, tokens);
+                else if(sents.get(i).get(0).type.equals(tokens[9]) && sents.get(i).get(1).type.equals(tokens[10]))
+                    variable_assignment(sents, i, map, tokens);
+                else if(sents.get(i).get(0).type.equals(tokens[0]))
+                    return_expr(sents, i, map, tokens);
+                else if(sents.get(i).get(0).type.equals(tokens[25]))
+                    continue;
+                else{
+                    System.out.println("Syntax Error");
+                    System.exit(8);
+                }
+            }
+        }
+    }
+
+
     //Variable Declaration
     private static void variable_declaration(ArrayList<ArrayList<Tokenss>> sents, int i, HashMap<String, Tokenss> map, String tokens[]){
+        ArrayList<Tokenss> temp = new ArrayList<>();
+
         for(int j = 3; j < sents.get(i).size(); j++){
             Tokenss t = sents.get(i).get(j);
 
@@ -357,21 +298,14 @@ public class no{
         }
 
         evaluation(temp, tokens);
-        boolean change = false;
-        do{
-            int before = temp.size();
-            solveLogOper(temp, tokens);
-            solveLogExpr(temp, tokens);
-            change = (before == temp.size()) ? false : true;
-        }while(change);
-
         map.put(sents.get(i).get(1).value, temp.get(0));
     }
 
 
-
     //Variable Assignment/Replacing
     private static void variable_assignment(ArrayList<ArrayList<Tokenss>> sents, int i, HashMap<String, Tokenss> map, String[] tokens){
+        ArrayList<Tokenss> temp = new ArrayList<>();
+
         for(int j = 2; j < sents.get(i).size(); j++){
             Tokenss t = sents.get(i).get(j);
 
@@ -382,17 +316,32 @@ public class no{
         }
 
         evaluation(temp, tokens);
-        boolean change = false;
-        do{
-            int before = temp.size();
-            solveLogOper(temp, tokens);
-            solveLogExpr(temp, tokens);
-            change = (before == temp.size()) ? false : true;
-        }while(change);
-
         map.put(sents.get(i).get(0).value, temp.get(0));
     }
 
+
+    //Return Keyword Evaluation
+    private static void return_expr(ArrayList<ArrayList<Tokenss>> sents, int i, HashMap<String, Tokenss> map, String[] tokens){
+        ArrayList<Tokenss> temp = new ArrayList<>();
+
+        int pos = 1;
+        if(sents.get(i).get(1).type.equals("_not"))
+            pos = 2;
+
+        for(int j = pos; j < sents.get(i).size() - 1; j++){
+            Tokenss t = sents.get(i).get(j);
+
+            // Replacing Variables with their Literal values
+            if(map.containsKey(t.value))
+                temp.add(map.get(t.value));
+            else
+                temp.add(t);
+            }
+
+        //Evaluation
+        evaluation(temp, tokens);
+        result = Integer.parseInt(temp.get(0).value);
+    }
 
     //Check if Paranthesis are present
     private static boolean check_paran(ArrayList<Tokenss> list){
@@ -531,6 +480,10 @@ public class no{
                     temp.set(i,  new Tokenss(Integer.toString(0), tokens[1]));
                     temp.remove(i + 1);
                 }
+                else{
+                    temp.set(i, new Tokenss(Integer.toString(1), tokens[1]));
+                    temp.remove(i + 1);
+                }
             }
         }
     }
@@ -593,6 +546,14 @@ public class no{
         solvePower(tokenList, tokens);
         mult_or_div(tokenList, tokens);
         add_or_sub(tokenList, tokens);
+
+        boolean change = false;
+        do{
+            int before = tokenList.size();
+            solveLogOper(tokenList, tokens);
+            solveLogExpr(tokenList, tokens);
+            change = (before == tokenList.size()) ? false : true;
+        }while(change);
     }
 
 
@@ -608,11 +569,16 @@ public class no{
 
     //Finding the Brackets for Conditional Statements
     private static int find_the_bracket(int pos, ArrayList<ArrayList<Tokenss>> sents, String[] tokens){
+        int depth = 0;
         for(; pos < sents.size(); pos++){
             for(int i = 0; i < sents.get(pos).size(); i++){
+                if(sents.get(pos).get(i).type.equals(tokens[24]))
+                    depth++;
                 if(sents.get(pos).get(i).type.equals(tokens[25]))
-                    return pos;
+                    depth--;
             }
+            if(depth == 0)
+                return pos;
         }
 
         return -1;
