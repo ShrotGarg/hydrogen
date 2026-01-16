@@ -21,7 +21,7 @@ class Tokenss {
 public class no{
 
     static int result = 0;
-    static boolean flag_var = false; static boolean cond_met = false;
+    static boolean flag_var = false; static boolean cond_met = false; static boolean return_found = false;
     static String cachedSdkPath = null;
 
     public static void main(String[] args) throws IOException, InterruptedException{
@@ -203,6 +203,8 @@ public class no{
         boolean condition = false;
 
         for(; i < end; i++){
+            if(return_found)
+                return ;
 
             //Condition: If
             if(sents.get(i).get(0).type.equals(tokens[21])){
@@ -265,20 +267,29 @@ public class no{
             }
 
 
-            //Normal Evaluation: Var stuff and arithmetic
+            //Variable Declaration
+            else if(sents.get(i).get(0).type.equals(tokens[8]) && sents.get(i).get(1).type.equals(tokens[9]) && sents.get(i).get(2).type.equals(tokens[10]))
+                variable_declaration(sents, i, map, tokens);
+
+            //Variable Assignment/Replacing the variables with their values
+            else if(sents.get(i).get(0).type.equals(tokens[9]) && sents.get(i).get(1).type.equals(tokens[10]))
+                variable_assignment(sents, i, map, tokens);
+
+            //Return Expression
+            else if(sents.get(i).get(0).type.equals(tokens[0])){
+                return_expr(sents, i, map, tokens);
+                return_found = true;
+                return; // As soon it hits return, break out and return that code
+            }
+
+            //Skipping if it encounters { or }
+            else if(sents.get(i).get(0).type.equals(tokens[25]) || sents.get(i).get(0).type.equals(tokens[24]))
+                continue;
+
+            //Syntax Error Otherwise
             else{
-                if(sents.get(i).get(0).type.equals(tokens[8]) && sents.get(i).get(1).type.equals(tokens[9]) && sents.get(i).get(2).type.equals(tokens[10]))
-                    variable_declaration(sents, i, map, tokens);
-                else if(sents.get(i).get(0).type.equals(tokens[9]) && sents.get(i).get(1).type.equals(tokens[10]))
-                    variable_assignment(sents, i, map, tokens);
-                else if(sents.get(i).get(0).type.equals(tokens[0]))
-                    return_expr(sents, i, map, tokens);
-                else if(sents.get(i).get(0).type.equals(tokens[25]))
-                    continue;
-                else{
-                    System.out.println("Syntax Error");
-                    System.exit(8);
-                }
+                System.out.println("Syntax Error");
+                System.exit(8);
             }
         }
     }
@@ -479,10 +490,12 @@ public class no{
                 if(Integer.parseInt(temp.get(i + 1).value) > 0){
                     temp.set(i,  new Tokenss(Integer.toString(0), tokens[1]));
                     temp.remove(i + 1);
+                    i = 0;
                 }
                 else{
                     temp.set(i, new Tokenss(Integer.toString(1), tokens[1]));
                     temp.remove(i + 1);
+                    i = 0;
                 }
             }
         }
