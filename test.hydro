@@ -1,4 +1,23 @@
-var x = 1 and 0;
+var x = 1 or 0;
 var y = x + 5;
 
-return ((y));
+if x equals y{
+    x = 10;
+}
+elif x not_equals y{
+    x = 11;
+    if (x - 1) equals 10{
+        x = 1;
+    }
+}
+elif x > y{
+    x = 3;
+}
+elif x equals_more y{
+    x = 4;
+}
+else{
+    x = 2;
+}
+
+return x;
