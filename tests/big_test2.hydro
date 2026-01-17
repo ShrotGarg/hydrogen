@@ -1,0 +1,61 @@
+var a = 10;
+var b = 3;
+var c = 2;
+
+var sum = a + b;
+var diff = a - b;
+var prod = a * b;
+var quot = a / c;
+
+var prec1 = a + b * c;
+var prec2 = (a + b) * c;
+
+var power_test = a ^ c;
+
+a = a + 5;
+b = b * 2;
+
+var logic1 = 1 and 1;
+var logic2 = 1 and 0;
+var logic3 = 0 or 1;
+var logic4 = not 0;
+var logic5 = not 1;
+
+var eq1 = a equals 15;
+var eq2 = a not_equals 10;
+var lt1 = b < a;
+var gt1 = b > a;
+var le1 = b equals_less 6;
+var ge1 = a equals_more 15;
+
+var mix1 = (a > b) and (b > c);
+var mix2 = (a < b) or (c < b);
+var mix3 = not (a < b);
+
+var result = 0;
+
+if a > b {
+    result = 10;
+
+    if b > c {
+        result = result + 5;
+    }
+    else {
+        result = result - 5;
+    }
+}
+elif a equals b {
+    result = 20;
+}
+else {
+    result = -10;
+}
+
+if (a > b) and (b > c) and (a < c) {
+    result = result + 100;
+}
+else {
+    result = result - 100;
+}
+
+return result;
