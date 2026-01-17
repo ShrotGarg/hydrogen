@@ -21,7 +21,7 @@ class Tokenss {
 public class no{
 
     static int result = 0;
-    static boolean flag_var = false; static boolean cond_met = false; static boolean return_found = false;
+    static boolean return_found = false;
     static String cachedSdkPath = null;
 
     public static void main(String[] args) throws IOException, InterruptedException{
@@ -35,18 +35,12 @@ public class no{
         String contents = Files.readString(Path.of(args[0])).trim() + " ";
         String tokens[] = {"_return", "int_lit", "plus", "minus", "mult", "div", "open_para", "close_para", "_variable", "var_name", "_equal", "_and", "_or", "_not", "equals", "less", "equals_less", "more", "equals_more", "not_equals", "power", "_if", "_elif", "_else", "open_brac", "close_brac", "semi"}; //26
         ArrayList <Tokenss> tokenList = tokenization(contents, tokens);
-        //printList(tokenList);
         HashMap <String, Tokenss> map = new HashMap<>();
-
-        //Basic Syntax Check
-        if(!checkSyntax(tokenList)){
-            System.out.print("Syntax Error");
-            System.exit(7);
-        }
 
         //To evaluate code that has variables
         ArrayList<ArrayList<Tokenss>> sents = new ArrayList<>();
         ArrayList<Tokenss> temp = new ArrayList<>();
+
         //Seperate each '; { } ' into seperate sentences
         for(int i = 0; i < tokenList.size(); i++){
             if(tokenList.get(i).type.equals(tokens[26]) || tokenList.get(i).type.equals(tokens[24]) || tokenList.get(i).type.equals(tokens[25])){
@@ -58,6 +52,8 @@ public class no{
                 temp.add(tokenList.get(i));
         }
         temp.clear();
+
+        checkSyntax(sents, map, tokens);
         compile(0, sents.size(), sents, map, tokens);
 
         //To reduce runtime
@@ -103,7 +99,7 @@ public class no{
     }
 
 
-    // Tokenization
+    //Tokenization
     public static ArrayList<Tokenss> tokenization(String content, String tokens[]) {
         ArrayList<Tokenss> list = new ArrayList<Tokenss>();
         String str = "";
@@ -111,18 +107,12 @@ public class no{
         for (int i = 0; i < content.length(); i++) {
             char ch = content.charAt(i);
 
-            if (Character.isLetterOrDigit(ch) || ch == '_')
-                str += ch;
+            if (Character.isLetterOrDigit(ch) || ch == '_') str += ch;
             else{
                 if (!str.isEmpty()){
-                    if (str.equals("return"))
-                        list.add(new Tokenss(str, tokens[0]));
-                    else if (isNumber(str))
-                        list.add(new Tokenss(str, tokens[1]));
-                    else if(str.equals("var")){
-                        list.add(new Tokenss(str,tokens[8]));
-                        flag_var = true;
-                    }
+                    if (str.equals("return")) list.add(new Tokenss(str, tokens[0]));
+                    else if (isNumber(str)) list.add(new Tokenss(str, tokens[1]));
+                    else if(str.equals("var")) list.add(new Tokenss(str,tokens[8]));
                     else if(str.equals("and")) list.add(new Tokenss(str, tokens[11]));
                     else if (str.equals("or")) list.add(new Tokenss(str, tokens[12]));
                     else if(str.equals("not")) list.add(new Tokenss(str, tokens[13]));
@@ -133,8 +123,7 @@ public class no{
                     else if(str.equals("if")) list.add(new Tokenss(str, tokens[21]));
                     else if(str.equals("elif")) list.add(new Tokenss(str, tokens[22]));
                     else if(str.equals("else")) list.add(new Tokenss(str, tokens[23]));
-                    else
-                        list.add(new Tokenss(str, tokens[9]));
+                    else list.add(new Tokenss(str, tokens[9]));
                     str = "";
                 }
 
@@ -165,7 +154,7 @@ public class no{
     }
 
 
-    // To check if str is a number
+    //To check if str is a number
     private static boolean isNumber(String str){
         for(int i = 0; i < str.length(); i++){
             if(!Character.isDigit(str.charAt(i)))
@@ -175,30 +164,48 @@ public class no{
     }
 
 
-    //To check the syntax against the laws of our language
-    private static boolean checkSyntax(ArrayList<Tokenss> list){
-        int c = 0;
+    //To check the syntax
+    private static boolean checkSyntax(ArrayList<ArrayList<Tokenss>> sents, HashMap<String, Tokenss> map, String[] tokens){
+        for(int i = 0; i < sents.size(); i++){
+            for(int j = 0; j < sents.get(i).size() - 1; j++){
+                //No consecutive operator/operand
+                if(sents.get(i).get(j).type.equals(sents.get(i).get(j + 1).type) && "{}()".indexOf(sents.get(i).get(j).value) != -1)
+                    return false;
+            }
 
-        for(int i = 0; i < list.size() - 1; i++){
-            //Two operators or operands can't be one after the other
-            //if(list.get(i).type.equals(list.get(i + 1).type) && !(list.get(i).type.equals("open_para") || list.get(i).type.equals("close_para")))
-                //return false;
+            int c = 0;
+            for(int j = 0; j < sents.get(i).size(); j++){
+                //Bracket Check
+                if(sents.get(i).get(j).type.equals(tokens[6]) || sents.get(i).get(j).type.equals(tokens[24]))
+                    c++;
+                else if(sents.get(i).get(j).type.equals(tokens[7]) || sents.get(i).get(j).type.equals(tokens[25]))
+                    c--;
+            }
+            if(c != 0)
+                return false;
 
-            //Checking the paranthesis count
-            if(list.get(i).type.equals("open_para"))
-                c++;
-            if(list.get(i).type.equals("close_para"))
-                c--;
+            //End with semicolon or { OR start and end with only }
+            if(!sents.get(i).get(sents.get(i).size() - 1).type.equals(tokens[26]) && !sents.get(i).get(sents.get(i).size() - 1).type.equals(tokens[24]))
+                return false;
+            else if(!sents.get(i).get(0).type.equals(sents.get(i).get(sents.get(i).size() - 1).type) && sents.get(i).get(0).type.equals(tokens[25]))
+                return false;
+
+            //No declaration allowed if the variable is already declared
+            if(sents.get(i).get(0).type.equals(tokens[8]))
+                if(map.containsKey(sents.get(i).get(1).value))
+                    return false;
+
+            //Undeclared Variable is used in assignment
+            if(sents.get(i).get(0).type.equals(tokens[9]))
+                if(!map.containsKey(sents.get(i).get(0).value))
+                    return false;
+
         }
-
-        if(c != 0)
-            return false;
-
         return true;
     }
 
 
-    //Parsing of Tokens/ Compiler Logic
+    //Parsing of Tokens / Compiler Logic
     private static void compile(int i, int end, ArrayList<ArrayList<Tokenss>> sents, HashMap<String, Tokenss> map, String[] tokens){
         boolean condition = false;
 
@@ -279,7 +286,7 @@ public class no{
             else if(sents.get(i).get(0).type.equals(tokens[0])){
                 return_expr(sents, i, map, tokens);
                 return_found = true;
-                return; // As soon it hits return, break out and return that code
+                return; // As soon it hits return, break out and return that exit code
             }
 
             //Skipping if it encounters { or }
@@ -446,7 +453,7 @@ public class no{
     }
 
 
-    // Evaluating + and -
+    //Evaluating + and -
     private static void add_or_sub(ArrayList<Tokenss> tokenList, String[] tokens){
         int val = 0;
         int i = 0;
@@ -553,7 +560,7 @@ public class no{
     }
 
 
-    // Evaluation Syntax
+    //Evaluation Syntax
     private static void evaluation(ArrayList<Tokenss> tokenList, String tokens[]){
         solvePara(tokenList, tokens);
         solvePower(tokenList, tokens);
@@ -598,7 +605,7 @@ public class no{
     }
 
 
-    // To run the terminal commands
+    //To run the terminal commands
     public static void runCommand(String... cmd) throws IOException, InterruptedException{
         ProcessBuilder pb = new ProcessBuilder(cmd);
         pb.inheritIO();
@@ -621,7 +628,7 @@ public class no{
             return cachedSdkPath;
         }
 
-        // If not in default, ask the system
+        //If not in default, ask the system
         Process process = Runtime.getRuntime().exec("xcrun --show-sdk-path");
         try (BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
             cachedSdkPath = r.readLine();
